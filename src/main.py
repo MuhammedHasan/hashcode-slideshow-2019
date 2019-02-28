@@ -12,7 +12,9 @@ def write(filename):
 
 if __name__ == "__main__":
     files = [
-        'small'
+        'example',
+        'small',
+        'medium',
         'big'
     ]
 
