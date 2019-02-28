@@ -20,13 +20,13 @@ def parse(filename):
         line = filename.readline().strip().split(' ')
         shape = line[0]
         tags = set(line[2:])
-        yield Image(idx=i, shape=shape, tags=tags)
+        yield Image(idx=str(i), shape=shape, tags=tags)
 
 
 def max_image(image, images, image_set):
     curr_image = -1
     curr_max = -1
-    stop = 10
+    stop = 1000
 
     for i in image_set:
         stop -= 1
@@ -44,12 +44,26 @@ def max_image(image, images, image_set):
                key=lambda x: sim(images[image], images[x]))
 
 
+def merge_V(images):
+    Himages = list(filter(lambda x: x.shape == 'H', images))
+    Vimages = list(filter(lambda x: x.shape == 'V', images))
+
+    V1images = Vimages[:len(Vimages)//2]
+    V2images = Vimages[len(Vimages)//2:]
+
+    for i in Himages:
+        yield i
+
+    for i, j in zip(V1images, V2images):
+        yield Image(idx='%s %s' % (i.idx, j.idx), shape='V', tags=i.tags.union(j.tags))
+
+
 def solve(images):
     '''
     Return list of tuple of images []
 
     '''
-    images = list(filter(lambda x: x.shape == 'H', images))
+    images = list(merge_V(images))
     image = images[0].idx
     images = {i.idx: i for i in images}
     image_set = set([i.idx for i in images.values()])
@@ -72,9 +86,9 @@ def write(solution, filename):
     filename.write('%d\n' % len(solution))
     for i in solution:
         if len(i) == 1:
-            filename.write('%d\n' % (i[0].idx))
+            filename.write('%s\n' % (i[0].idx))
         if len(i) == 2:
-            filename.write('%d %d\n' % (i[0].idx, i[1].idx))
+            filename.write('%s %s\n' % (i[0].idx, i[1].idx))
         if len(i) > 2:
             raise ValueError('i cannot bigger than 2')
 
@@ -82,7 +96,7 @@ def write(solution, filename):
 if __name__ == "__main__":
     files = [
         'a_example',
-        # 'b_lovely_landscapes',
+        'b_lovely_landscapes',
         'c_memorable_moments',
         'd_pet_pictures',
         'e_shiny_selfies'
