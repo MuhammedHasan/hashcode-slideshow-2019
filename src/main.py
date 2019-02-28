@@ -20,9 +20,15 @@ def parse(filename):
 
 
 def solve(images):
-    images = list(filter(lambda x: x.shape == 'H', images))
+    '''
+    Return list of tuple of images []
 
-    image_set = set([i.idx for i in images])
+    '''
+
+    images = list(filter(lambda x: x.shape == 'H', images))
+    images = {i.idx: i for i in images}
+
+    image_set = set([i.idx for i in images.values()])
     image = 0
 
     while True:
@@ -30,10 +36,10 @@ def solve(images):
             image_set.remove(image)
             next_image = max(image_set,
                              key=lambda x: sim(images[image], images[x]))
-            yield images[next_image]
+            yield (images[next_image], )
             image = next_image
         elif len(image_set) == 1:
-            yield images[next_image]
+            yield (images[next_image], )
             break
         else:
             break
@@ -63,3 +69,4 @@ if __name__ == "__main__":
         images = list(parse(open('../inputs/%s.txt' % f)))
         solution = list(solve(images))
         write(solution, open('../outputs/%s.out' % f, 'w'))
+        print(f)
