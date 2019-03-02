@@ -1,9 +1,13 @@
 import pytest
-from main import Image, sim
+from main import Image
 
-img1 = Image(idx=3, shape='H', tags={'garden', 'selfie', 'smile'})
-img2 = Image(idx=1, shape='V', tags={'cat', 'garden'})
+images = [
+    Image(idx='0', shape='H', tags={'sun', 'beach', 'cat'}),
+    Image(idx='1', shape='V', tags={'smile', 'selfie'}),
+    Image(idx='2', shape='V', tags={'selfie', 'garden'}),
+    Image(idx='3', shape='H', tags={'cat', 'garden'})
+]
 
 
 def test_sim():
-    assert sim(img1, img2) == 1
+    assert images[3].sim(images[0]) == 1
