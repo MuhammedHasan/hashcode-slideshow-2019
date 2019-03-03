@@ -1,4 +1,6 @@
+from bitarray import bitarray
 from collections import defaultdict
+from itertools import cycle
 
 
 class QuickUnion:
@@ -43,7 +45,14 @@ class Image:
         )
 
     def sim_bitwise(self, other):
-        pass
+        if not (self.bit_tags and other.bit_tags):
+            raise ValueError('Image need to bitwise indexed!')
+        intersect = (self.bit_tags & other.bit_tags).count()
+        return min(
+            len(self.tags) - intersect,
+            len(other.tags) - intersect,
+            intersect
+        )
 
     def merge(self, other):
         if self.shape != 'V' or other.shape != 'V':
@@ -68,18 +77,18 @@ class Image:
 
 class BitEncoder:
 
-    def fit(dataset):
-        pass
-
-    def transform(image):
-        pass
-
-    def uniqui_tags(images):
+    def fit(self, images):
         all_tags = set()
         for i in images:
             for t in i.tags:
                 all_tags.add(t)
-        return list(all_tags)
+        self._tags = list(all_tags)
+        return self
+
+    def transform(self, image):
+        return bitarray([
+            t in image.tags for t in self._tags
+        ])
 
 
 class Dataset:
@@ -171,6 +180,9 @@ class Dataset:
         for i in range(len(images)):
             image_i = images[i]
 
+            if i % 100 == 0:
+                print(i)
+
             for j in range(i + 1, len(images)):
                 image_j = images[j]
 
@@ -187,6 +199,17 @@ class Dataset:
 
         return buckets
 
+    def _index_balanced_bucket(self, images):
+        buckets = defaultdict(set)
+
+        print('\t- Indexing balanced buckets...')
+
+        for i in images:
+            bucket = min((buckets[t] for t in i.tags), key=lambda x: len(x))
+            bucket.add(i)
+
+        return buckets
+
     def _solve_buckets(self, images):
         buckets = self._index_bucket(images)
 
@@ -200,10 +223,44 @@ class Dataset:
                     if image_j != image_i:
                         yield (image_i, image_j, image_i.sim(image_j))
 
-    def _solve_bit_trick(self, images):
-        pass
+    def _index_tags_as_bit(self, images):
+        print('\t- Indexing bitwise...')
 
-    def solve(self, algorithm='naive'):
+        bit_encoder = BitEncoder()
+        bit_encoder.fit(images)
+
+        for i in images:
+            i.bit_tags = bit_encoder.transform(i)
+
+    def _solve_balanced_buckets(self, images):
+        buckets = self._index_balanced_bucket(images)
+
+        print('\t- Calculating pair of images...')
+
+        for i, buc in enumerate(buckets.values()):
+
+            print(i, len(buc))
+
+            for image_i in buc:
+                for image_j in buc:
+                    yield (image_i, image_j, image_i.sim(image_j))
+
+    def _solve_sample(self, images, sample_size=1000):
+
+        cycled_images = cycle(images)
+
+        for i, image_i in enumerate(images):
+
+            if i % 1000 == 0:
+                print(i)
+
+            for _ in range(sample_size):
+                image_j = next(cycled_images)
+                sim = image_i.sim(image_j)
+                if sim:
+                    yield (image_i, image_j, sim)
+
+    def solve(self, algorithm='naive', sample_size=1000):
         images = list(self.parse())
         images = list(self._merge_vertical(images))
 
@@ -211,8 +268,8 @@ class Dataset:
             image_pairs = self._solve_naive(images)
         elif algorithm == 'buckets':
             image_pairs = self._solve_buckets(images)
-        elif algorithm == 'bit_trcik':
-            image_pairs = self._solve_bit_trick(images)
+        elif algorithm == 'sample':
+            image_pairs = self._solve_sample(images, sample_size=sample_size)
 
         solution = self._minimum_spanning_path(image_pairs, images)
         self.write(solution)
@@ -233,12 +290,20 @@ if __name__ == "__main__":
         # 'e_shiny_selfies'
     # ]
 
-    Dataset('a_example').solve('naive')
-    print('a_example done!')
+    # Dataset('a_example').solve('naive')
+    # print('a_example done!')
 
-    print('b_lovely_landscapes started...')
-    Dataset('b_lovely_landscapes').solve('buckets')
-    print('b_lovely_landscapes done!')
+    # print('b_lovely_landscapes started...')
+    # Dataset('b_lovely_landscapes').solve('buckets')
+    # print('b_lovely_landscapes done!')
 
-    Dataset('c_memorable_moments').solve('naive')
-    print('c_memorable_moments done!')
+    # Dataset('c_memorable_moments').solve('naive')
+    # print('c_memorable_moments done!')
+
+    print('d_pet_pictures started')
+    Dataset('d_pet_pictures').solve('sample', sample_size=4000)
+    print('d_pet_pictures ended!')
+
+    print('e_shiny_selfies! started')
+    Dataset('e_shiny_selfies').solve('sample', sample_size=5000)
+    print('e_shiny_selfies ended!')
