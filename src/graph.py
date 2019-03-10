@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 from collections import defaultdict
 from quick_union import QuickUnion
 
@@ -17,12 +19,16 @@ def kruskal_path(image_pairs, nodes):
     qu = QuickUnion(len(nodes))
     qu_idx = {v: i for i, v in enumerate(nodes)}
 
-    sorted_image_pairs = sorted(image_pairs,
-                                key=lambda x: x[2], reverse=True)
+    image_pairs = list(image_pairs)
+
+    image_pairs.sort(
+        key=lambda x: (x[2], -len(x[0].tags) - len(x[1].tags)),
+        reverse=True
+    )
 
     print('\t- Calculating minimum spanning path...')
 
-    for i, j, score in sorted_image_pairs:
+    for i, j, score in image_pairs:
         # number of node constrained with two
         if len(edges[i]) < 2 and len(edges[j]) < 2 \
            and (not qu.is_connected(qu_idx[i], qu_idx[j])):

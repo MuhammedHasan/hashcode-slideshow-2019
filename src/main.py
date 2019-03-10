@@ -87,7 +87,7 @@ class Dataset:
                 if sim:
                     yield (image_i, image_j, sim)
 
-    def solve(self, algorithm='naive', sample_size=1000, threshold=0.25):
+    def solve(self, algorithm='naive', threshold=0.25):
         images = list(self.parse())
 
         if algorithm == 'naive':
@@ -97,7 +97,7 @@ class Dataset:
             images = list(self._merge_vertical(images))
             image_pairs = self._solve_buckets(images)
         elif algorithm == 'lsh':
-            images = list(self._merge_vertical(images, sample_size=5000))
+            images = list(self._merge_vertical(images, sample_size=500))
             image_pairs = self._solve_lsh(images, threshold=threshold)
 
         solution = kruskal_path(image_pairs, images)
@@ -107,6 +107,7 @@ class Dataset:
         with open('../outputs/%s.out' % self.filename, 'w') as f:
             f.write('%d\n' % len(solution))
             for i in solution:
+
                 f.write('%s\n' % i.idx)
 
 
@@ -122,9 +123,9 @@ if __name__ == "__main__":
     print('c_memorable_moments done!')
 
     print('d_pet_pictures started')
-    Dataset('d_pet_pictures').solve('lsh', threshold=0.25)
+    Dataset('d_pet_pictures').solve('lsh', threshold=0.30)
     print('d_pet_pictures ended!')
 
     print('e_shiny_selfies! started')
-    Dataset('e_shiny_selfies').solve('lsh', threshold=0.1)
+    Dataset('e_shiny_selfies').solve('lsh', threshold=0.10)
     print('e_shiny_selfies ended!')
