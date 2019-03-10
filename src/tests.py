@@ -1,5 +1,6 @@
 import pytest
-from main import Image, BitEncoder
+from main import Image
+from bit_trick import BitEncoder
 
 images = [
     Image(idx='0', shape='H', tags={'sun', 'beach', 'cat'}),
