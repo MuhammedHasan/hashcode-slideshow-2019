@@ -1,5 +1,3 @@
-from tqdm import tqdm
-
 from collections import defaultdict
 from quick_union import QuickUnion
 

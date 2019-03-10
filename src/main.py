@@ -1,7 +1,19 @@
+from collections import defaultdict
 from tqdm import tqdm
 from image import Image
 from graph import kruskal_path
-from buckets import index_bucket, LocalSensitiveHashing
+
+
+def index_bucket(images):
+    buckets = defaultdict(set)
+
+    print('\t- Indexing buckets...')
+
+    for i in images:
+        for t in i.tags:
+            buckets[t].add(i)
+
+    return buckets
 
 
 class Dataset:
@@ -74,20 +86,18 @@ class Dataset:
                     if image_j != image_i:
                         yield (image_i, image_j, image_i.sim(image_j))
 
-    def _solve_lsh(self, images, threshold=0.25):
-
-        lsh = LocalSensitiveHashing()
-        lsh.index(images, threshold=threshold)
+    def _solve_sample(self, images, sample_size=2000):
+        cycled_images = images + images[:sample_size + 1]
 
         print('\t- Calculating pair of images...')
 
-        for image_i in tqdm(images):
-            for image_j in lsh.query(image_i):
+        for i, image_i in tqdm(enumerate(images)):
+            for image_j in cycled_images[i + 1: i + sample_size]:
                 sim = image_i.sim(image_j)
                 if sim:
                     yield (image_i, image_j, sim)
 
-    def solve(self, algorithm='naive', threshold=0.25):
+    def solve(self, algorithm='naive', sample_size=2000):
         images = list(self.parse())
 
         if algorithm == 'naive':
@@ -96,9 +106,9 @@ class Dataset:
         elif algorithm == 'buckets':
             images = list(self._merge_vertical(images))
             image_pairs = self._solve_buckets(images)
-        elif algorithm == 'lsh':
+        elif algorithm == 'sample':
             images = list(self._merge_vertical(images, sample_size=500))
-            image_pairs = self._solve_lsh(images, threshold=threshold)
+            image_pairs = self._solve_sample(images, sample_size=sample_size)
 
         solution = kruskal_path(image_pairs, images)
         self.write(solution)
@@ -107,7 +117,6 @@ class Dataset:
         with open('../outputs/%s.out' % self.filename, 'w') as f:
             f.write('%d\n' % len(solution))
             for i in solution:
-
                 f.write('%s\n' % i.idx)
 
 
@@ -123,9 +132,9 @@ if __name__ == "__main__":
     print('c_memorable_moments done!')
 
     print('d_pet_pictures started')
-    Dataset('d_pet_pictures').solve('lsh', threshold=0.30)
+    Dataset('d_pet_pictures').solve('sample')
     print('d_pet_pictures ended!')
 
     print('e_shiny_selfies! started')
-    Dataset('e_shiny_selfies').solve('lsh', threshold=0.10)
+    Dataset('e_shiny_selfies').solve('sample')
     print('e_shiny_selfies ended!')
