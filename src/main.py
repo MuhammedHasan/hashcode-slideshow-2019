@@ -1,8 +1,7 @@
 from tqdm import tqdm
 from image import Image
-from graph import kruskal_path, bucket_to_graph
-from buckets import index_bucket, index_balanced_bucket, \
-    index_sub_buckets, LocalSensitiveHashing
+from graph import kruskal_path
+from buckets import index_bucket, LocalSensitiveHashing
 
 
 class Dataset:
@@ -75,39 +74,6 @@ class Dataset:
                     if image_j != image_i:
                         yield (image_i, image_j, image_i.sim(image_j))
 
-    def _solve_balanced_buckets(self, images):
-        buckets = index_balanced_bucket(images)
-
-        print('\t- Calculating pair of images...')
-
-        for i, buc in enumerate(buckets.values()):
-
-            print(i, len(buc))
-
-            for image_i in buc:
-                for image_j in buc:
-                    yield (image_i, image_j, image_i.sim(image_j))
-
-    def _solve_graph(self, images):
-        buckets = list(index_sub_buckets(images))
-        graph = bucket_to_graph(buckets)
-
-    def _solve_sample(self, images, sample_size=1000):
-
-        cycled_images = images + images[:sample_size + 1]
-
-        print('\t- Calculating pair of images...')
-
-        for i, image_i in tqdm(enumerate(images)):
-
-            if i % 1000 == 0:
-                print(i)
-
-            for image_j in cycled_images[i + 1: i + sample_size]:
-                sim = image_i.sim(image_j)
-                if sim:
-                    yield (image_i, image_j, sim)
-
     def _solve_lsh(self, images, threshold=0.25):
 
         lsh = LocalSensitiveHashing()
@@ -130,18 +96,9 @@ class Dataset:
         elif algorithm == 'buckets':
             images = list(self._merge_vertical(images))
             image_pairs = self._solve_buckets(images)
-        elif algorithm == 'balanced_buckets':
-            images = list(self._merge_vertical(images))
-            image_pairs = self._solve_balanced_buckets(images)
-        elif algorithm == 'graph':
-            images = list(self._merge_vertical(images))
-            image_pairs = self._solve_graph(images)
         elif algorithm == 'lsh':
-            images = list(self._merge_vertical(images, sample_size=1000))
+            images = list(self._merge_vertical(images, sample_size=5000))
             image_pairs = self._solve_lsh(images, threshold=threshold)
-        elif algorithm == 'sample':
-            images = list(self._merge_vertical(images, sample_size=1000))
-            image_pairs = self._solve_sample(images, sample_size=sample_size)
 
         solution = kruskal_path(image_pairs, images)
         self.write(solution)
@@ -154,28 +111,20 @@ class Dataset:
 
 
 if __name__ == "__main__":
-    # Dataset('a_example').solve('naive')
-    # print('a_example done!')
+    Dataset('a_example').solve('naive')
+    print('a_example done!')
 
-    # print('b_lovely_landscapes started...')
-    # Dataset('b_lovely_landscapes').solve('buckets')
-    # print('b_lovely_landscapes done!')
+    print('b_lovely_landscapes started...')
+    Dataset('b_lovely_landscapes').solve('buckets')
+    print('b_lovely_landscapes done!')
 
-    # Dataset('c_memorable_moments').solve('naive')
-    # print('c_memorable_moments done!')
+    Dataset('c_memorable_moments').solve('naive')
+    print('c_memorable_moments done!')
 
-    # print('d_pet_pictures started')
-    # Dataset('d_pet_pictures').solve('lsh', threshold=0.35)
-    # print('d_pet_pictures ended!')
+    print('d_pet_pictures started')
+    Dataset('d_pet_pictures').solve('lsh', threshold=0.25)
+    print('d_pet_pictures ended!')
 
     print('e_shiny_selfies! started')
-    Dataset('e_shiny_selfies').solve('lsh', threshold=0.2)
+    Dataset('e_shiny_selfies').solve('lsh', threshold=0.1)
     print('e_shiny_selfies ended!')
-
-    # print('d_pet_pictures started')
-    # Dataset('d_pet_pictures').solve('sample', sample_size=1000)
-    # print('d_pet_pictures ended!')
-
-    # print('e_shiny_selfies! started')
-    # Dataset('e_shiny_selfies').solve('sample', sample_size=1000)
-    # print('e_shiny_selfies ended!')

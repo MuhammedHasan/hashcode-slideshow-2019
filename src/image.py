@@ -13,16 +13,6 @@ class Image:
             intersect
         )
 
-    def sim_bitwise(self, other):
-        if not (self.bit_tags and other.bit_tags):
-            raise ValueError('Image need to bitwise indexed!')
-        intersect = (self.bit_tags & other.bit_tags).count()
-        return min(
-            len(self.tags) - intersect,
-            len(other.tags) - intersect,
-            intersect
-        )
-
     def merge(self, other):
         if self.shape != 'V' or other.shape != 'V':
             raise ValueError('Only V shape are mergable!')

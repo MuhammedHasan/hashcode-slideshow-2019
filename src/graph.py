@@ -2,28 +2,6 @@ from collections import defaultdict
 from quick_union import QuickUnion
 
 
-def bucket_to_graph(buckets):
-    graph = defaultdict(set)
-
-    for ib, buc in enumerate(buckets):
-        print(ib, len(buc))
-        for i in buc:
-            for j in buc:
-                if i != j:
-                    graph[i].add(j)
-                    graph[j].add(i)
-
-    return dict(graph)
-
-
-def graph_to_edges(graph):
-    pass
-
-
-def prim_path(graph):
-    pass
-
-
 def kruskal_path(image_pairs, nodes):
     '''
     Kruskal like algorithm for creating path
